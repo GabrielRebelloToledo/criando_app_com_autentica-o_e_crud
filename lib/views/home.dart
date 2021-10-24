@@ -46,8 +46,8 @@ class _HomeState extends State<Home> {
         },
       ),
       body: FutureBuilder(
-        future: Provider.of<PessoaProvider>(context, listen: false)
-            .loadAllpacientes(),
+        future: Provider.of<ProductList>(context, listen: false)
+            .loadProducts(),
         builder: (ctx, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -56,10 +56,10 @@ class _HomeState extends State<Home> {
               child: Text('Ocorreu um erro!'),
             );
           } else {
-            return Consumer<PessoaProvider>(
+            return Consumer<ProductList>(
               builder: (ctx, orders, child) => ListView.builder(
-                itemCount: orders.dadosCount,
-                itemBuilder: (ctx, i) => ListPessoa(pessoa: orders.dados[i]),
+                itemCount: orders.itemsCount,
+                itemBuilder: (ctx, i) => ListPessoa(pessoa: orders.items[i]),
               ),
             );
           }

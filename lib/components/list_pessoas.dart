@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:auth_crud/models/pessoa.dart';
 import 'package:auth_crud/provider/pessoas.dart';
-import 'package:auth_crud/routes/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -28,7 +27,7 @@ class _ListPessoaState extends State<ListPessoa> {
                 padding: const EdgeInsets.all(20.0),
                 child: ListTile(
                     title: Text(
-                      'Nome: ' + widget.pessoa.nome + '\n',
+                      'Nome: ' + widget.pessoa.name + '\n',
                       style: TextStyle(fontSize: 20),
                     ),
                     subtitle: Text(
@@ -78,10 +77,10 @@ class _ListPessoaState extends State<ListPessoa> {
                               ).then((value) async {
                                 if (value ?? false) {
                                   try {
-                                    await Provider.of<PessoaProvider>(
+                                    await Provider.of<ProductList>(
                                       context,
                                       listen: false,
-                                    ).deletePaciente(widget.pessoa);
+                                    ).removeProduct(widget.pessoa);
                                   } on HttpException catch (error) {
                                     msg.showSnackBar(
                                       SnackBar(

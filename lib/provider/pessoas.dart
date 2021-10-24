@@ -1,24 +1,62 @@
 import 'dart:convert';
 import 'dart:math';
-import 'package:http/http.dart' as http;
-import 'package:auth_crud/models/pessoa.dart';
-import 'package:flutter/material.dart';
 
-class PessoaProvider with ChangeNotifier {
-  static const _url =
-      "https://flutterauth-7fd97-default-rtdb.firebaseio.com/pacientes";
+import 'package:auth_crud/exceptions/http_exception.dart';
+import 'package:auth_crud/models/pessoa.dart';
+import 'package:auth_crud/utils/constants.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+
+class ProductList with ChangeNotifier {
   final String _token;
   final String _userId;
-  final String statusPaciente = "Alta";
-  final String statusPacienteEditado = 'Ativo';
+  List<Pessoa> _items = [];
 
-  PessoaProvider([this._token = '', this._dados = const [], this._userId = '']);
+  List<Pessoa> get items => [..._items];
+  
+  ProductList([
+    this._token = '',
+    this._userId = '',
+    this._items = const [],
+  ]);
 
-  List<Pessoa> _dados = [];
-  List<Pessoa> get dados => [..._dados];
+  int get itemsCount {
+    return _items.length;
+  }
 
-  int get dadosCount {
-    return dados.length;
+  Future<void> loadProducts() async {
+    _items.clear();
+
+    final response = await http.get(
+      Uri.parse('${Constants.PRODUCT_BASE_URL}.json?auth=$_token'),
+    );
+    if (response.body == 'null') return;
+
+    final favResponse = await http.get(
+      Uri.parse(
+        '${Constants.USER_FAVORITES_URL}.json?auth=$_token',
+      ),
+    );
+
+    Map<String, dynamic> favData =
+        favResponse.body == 'null' ? {} : jsonDecode(favResponse.body);
+
+    Map<String, dynamic> data = jsonDecode(response.body);
+    data.forEach((productId, productData) {
+      final isFavorite = favData[productId] ?? false;
+      _items.add(
+        Pessoa(
+          id: productId,
+          name: productData['name'],
+          description: productData['description'],
+          price: productData['price'],
+          imageUrl: productData['imageUrl'],
+          
+        ),
+      );
+    });
+    notifyListeners();
   }
 
   Future<void> saveProduct(Map<String, Object> data) {
@@ -26,88 +64,90 @@ class PessoaProvider with ChangeNotifier {
 
     final product = Pessoa(
       id: hasId ? data['id'] as String : Random().nextDouble().toString(),
-      nome: data['name'] as String,
+      name: data['name'] as String,
+      description: data['description'] as String,
+      price: data['price'] as double,
+      imageUrl: data['imageUrl'] as String,
     );
 
     if (hasId) {
-      return updatePaciente(product);
+      return updateProduct(product);
     } else {
-      return createPaciente(product);
+      return addProduct(product);
     }
   }
 
-  //CREATE
-  Future<void> createPaciente(Pessoa newPaciente) async {
+  Future<void> addProduct(Pessoa product) async {
     final response = await http.post(
-      //o ?auth=$_token serve para encaminhar ao backend a solicitação do token, informando que esta autenticado
-      Uri.parse("$_url/$_userId.json?auth=$_token"),
-      body: json.encode({
-        'nome': newPaciente.nome,
-      }),
+      Uri.parse('${Constants.PRODUCT_BASE_URL}.json?auth=$_token'),
+      body: jsonEncode(
+        {
+          "name": product.name,
+          "description": product.description,
+          "price": product.price,
+          "imageUrl": product.imageUrl,
+        },
+      ),
     );
 
-    _dados.add(Pessoa(
-      id: json.decode(response.body)['name'],
-      nome: newPaciente.nome,
+    final id = jsonDecode(response.body)['name'];
+    _items.add(Pessoa(
+      id: id,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      imageUrl: product.imageUrl,
     ));
     notifyListeners();
   }
 
-  // UPDATE
-  Future<void> updatePaciente(Pessoa paciente) async {
-    final i = _dados.indexWhere((pac) => pac.id == paciente.id);
-    if (i >= 0) {
-      final response = await http.put(
-          Uri.parse("$_url/$_userId/${paciente.id}.json?auth=$_token"),
-          body: json.encode({
-            'nome': paciente.nome,
-          }));
-      _dados[i] = paciente;
+  Future<void> updateProduct(Pessoa product) async {
+    int index = _items.indexWhere((p) => p.id == product.id);
+
+    if (index >= 0) {
+      await http.patch(
+        Uri.parse(
+          '${Constants.PRODUCT_BASE_URL}/${product.id}.json?auth=$_token',
+        ),
+        body: jsonEncode(
+          {
+            "name": product.name,
+            "description": product.description,
+            "price": product.price,
+            "imageUrl": product.imageUrl,
+          },
+        ),
+      );
+
+      _items[index] = product;
       notifyListeners();
     }
   }
 
-  //Alta do paciente
-  Future<void> altaPaciente(Pessoa paciente) async {
-    _dados.remove(paciente);
-    notifyListeners();
-    final response = await http.put(
-        Uri.parse(
-          '$_url/$_userId/${paciente.id}.json?auth=$_token',
-        ),
-        body: json.encode({
-          'nome': paciente.nome,
-        }));
-  }
+  Future<void> removeProduct(Pessoa product) async {
+    int index = _items.indexWhere((p) => p.id == product.id);
 
-  // READ
-  Future<void> loadAllpacientes() async {
-    _dados.clear();
-
-    final response = await http.get(
-      Uri.parse("$_url/$_userId.json?auth=$_token"),
-    );
-    if (response.body == 'null') return;
-
-    Map<String, dynamic> data = jsonDecode(response.body);
-    data.forEach((pacienteId, pacienteData) {
-      _dados.add(Pessoa(
-        id: pacienteId,
-        nome: pacienteData['nome'],
-      ));
-    });
-    notifyListeners();
-  }
-
-  // DELETE
-  Future<void> deletePaciente(Pessoa paciente) async {
-    final i = _dados.indexWhere((pac) => pac.id == paciente.id);
-    if (i >= 0) {
-      final paciente = _dados[i];
-      _dados.remove(paciente);
+    if (index >= 0) {
+      final product = _items[index];
+      _items.remove(product);
       notifyListeners();
-      final response = await http
-          .delete(Uri.parse("$_url/$_userId/${paciente.id}.json?auth=$_token"));
+
+      final response = await http.delete(
+        Uri.parse(
+          '${Constants.PRODUCT_BASE_URL}/${product.id}.json?auth=$_token',
+        ),
+      );
+
+      if (response.statusCode >= 400) {
+        _items.insert(index, product);
+        notifyListeners();
+        throw HttpException(
+          msg: 'Não foi possível excluir o produto.',
+          statusCode: response.statusCode,
+        );
+      }
     }
   }
 }
+
+  

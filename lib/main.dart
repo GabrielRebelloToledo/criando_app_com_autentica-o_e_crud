@@ -28,12 +28,14 @@ class MyApp extends StatelessWidget {
         ),
         //Logica para autenticação mudança de ChangeNotifierProvider para ChangeNotifierProxyProvider
         //Colocando em estrutura gravitacional
-        ChangeNotifierProxyProvider<Auth, PessoaProvider>(
-          create: (context) => PessoaProvider(),
+        ChangeNotifierProxyProvider<Auth, ProductList>(
+          create: (context) => ProductList(),
           //Logica para autenticação
           update: (ctx, auth, previous) {
-            return PessoaProvider(
-                auth.token ?? '', previous!.dados, auth.userId ?? '');
+            return ProductList(
+                auth.token ?? '',
+              auth.userId ?? '',
+              previous?.items ?? [],);
           },
         ),
       ],

@@ -3,6 +3,7 @@ import 'package:auth_crud/provider/pessoas.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+
 class ProductFormPage extends StatefulWidget {
   const ProductFormPage({Key? key}) : super(key: key);
 
@@ -38,12 +39,12 @@ class _ProductFormPageState extends State<ProductFormPage> {
       if (arg != null) {
         final product = arg as Pessoa;
         _formData['id'] = product.id;
-        _formData['nome'] = product.nome;
-        /* _formData['price'] = product.price;
+        _formData['name'] = product.name;
+        _formData['price'] = product.price;
         _formData['description'] = product.description;
         _formData['imageUrl'] = product.imageUrl;
 
-        _imageUrlController.text = product.imageUrl; */
+        _imageUrlController.text = product.imageUrl;
       }
     }
   }
@@ -82,7 +83,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
     setState(() => _isLoading = true);
 
     try {
-      await Provider.of<PessoaProvider>(
+      await Provider.of<ProductList>(
         context,
         listen: false,
       ).saveProduct(_formData);
@@ -130,7 +131,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 child: ListView(
                   children: [
                     TextFormField(
-                      initialValue: _formData['nome']?.toString(),
+                      initialValue: _formData['name']?.toString(),
                       decoration: InputDecoration(
                         labelText: 'Nome',
                       ),
@@ -138,7 +139,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                       onFieldSubmitted: (_) {
                         FocusScope.of(context).requestFocus(_priceFocus);
                       },
-                      onSaved: (name) => _formData['nome'] = name ?? '',
+                      onSaved: (name) => _formData['name'] = name ?? '',
                       validator: (_name) {
                         final name = _name ?? '';
 
@@ -153,7 +154,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                         return null;
                       },
                     ),
-                    /* TextFormField(
+                    TextFormField(
                       initialValue: _formData['price']?.toString(),
                       decoration: InputDecoration(labelText: 'Preço'),
                       textInputAction: TextInputAction.next,
@@ -243,7 +244,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                               : Image.network(_imageUrlController.text),
                         ),
                       ],
-                    ), */
+                    ),
                   ],
                 ),
               ),

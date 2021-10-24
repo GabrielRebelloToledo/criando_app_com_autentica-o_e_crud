@@ -1,15 +1,15 @@
 class Pessoa {
-  final String id;
-  final String nome;
-  /* final String endereco;
-  final String numero;
-  final String idade; */
+ final String id;
+  final String name;
+  final String description;
+  final double price;
+  final String imageUrl;
 
   const Pessoa({
     required this.id,
-    required this.nome,
-    /* required this.endereco,
-    required this.numero,
-    required this.idade, */
+    required this.name,
+    required this.description,
+    required this.price,
+    required this.imageUrl,
   });
 }
